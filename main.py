@@ -53,6 +53,7 @@ class Game:
                     red_spawn = random.choice(red_pad.spawnpoints())
                     if padspawn == 'r':
                         red_spawn = (red_pad.x, red_pad.y)
+                        Wall.wallList.append((red_pad.x, red_pad.y))
                     self.red_ferret = Ferret(self, red_spawn[0], red_spawn[1], red, red_pad)
                     self.ferrets.append(self.red_ferret)
                 elif tile == 'b':
@@ -61,6 +62,7 @@ class Game:
                     blue_spawn = random.choice(blue_pad.spawnpoints())
                     if padspawn == 'b':
                         blue_spawn = (blue_pad.x, blue_pad.y)
+                        Wall.wallList.append((blue_pad.x, blue_pad.y))
                     self.blue_ferret = Ferret(self, blue_spawn[0], blue_spawn[1], blue, blue_pad)
                     self.ferrets.append(self.blue_ferret)
                 elif tile == 'y':
@@ -69,6 +71,7 @@ class Game:
                     yellow_spawn = random.choice(yellow_pad.spawnpoints())
                     if padspawn == 'y':
                         yellow_spawn = (yellow_pad.x, yellow_pad.y)
+                        Wall.wallList.append((yellow_pad.x, yellow_pad.y))
                     self.yellow_ferret = Ferret(self, yellow_spawn[0], yellow_spawn[1], yellow, yellow_pad)
                     self.ferrets.append(self.yellow_ferret)
                 elif tile == 'g':
@@ -77,6 +80,7 @@ class Game:
                     green_spawn = random.choice(green_pad.spawnpoints())
                     if padspawn == 'g':
                         green_spawn = (green_pad.x, green_pad.y)
+                        Wall.wallList.append((green_pad.x, green_pad.y))
                     self.green_ferret = Ferret(self, green_spawn[0], green_spawn[1], green, green_pad)
                     self.ferrets.append(self.green_ferret)
                 elif tile == 'o':
@@ -85,6 +89,7 @@ class Game:
                     orange_spawn = random.choice(orange_pad.spawnpoints())
                     if padspawn == 'o':
                         orange_spawn = (orange_pad.x, orange_pad.y)
+                        Wall.wallList.append((orange_pad.x, orange_pad.y))
                     self.orange_ferret = Ferret(self, orange_spawn[0], orange_spawn[1], orange, orange_pad)
                     self.ferrets.append(self.orange_ferret)
 
@@ -159,7 +164,7 @@ class Game:
                     f.afraid = True
                     lengths = {}
                     f.get_small_neighbors()
-                    if len(f.smallneighbors()) > 0:
+                    if len(f.smallneighbors) > 0:
                         for i in f.smallneighbors:
                             self.path = self.player.pathfind(self.graph, self.start, (i[0], i[1]))
                             lengths[len(self.path)] = self.path
