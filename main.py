@@ -36,14 +36,18 @@ class Game:
     def new(self):
         self.all_sprites = pg.sprite.Group()
         self.walls = pg.sprite.Group()
+        padspawn = random.choice(['r', 'b', 'y', 'o', 'g'])
         for row, tiles in enumerate(self.map_data):
             for col, tile in enumerate(tiles):
-                padspawn = random.choice(['r', 'b', 'y', 'o', 'g'])
                 if tile == '#':
                     Wall(self, col, row)
                     self.graph.walls.append((col, row))
                     Wall.wallList.append((col, row))
-                elif tile == 'r':
+                elif tile == 'p':
+                    self.player = Player(self, col, row)
+        for row, tiles in enumerate(self.map_data):
+            for col, tile in enumerate(tiles):
+                if tile == 'r':
                     red_pad = Ferret_pad(self, col, row, red)
                     red_pad.draw()
                     red_spawn = random.choice(red_pad.spawnpoints())
@@ -83,8 +87,6 @@ class Game:
                         orange_spawn = (orange_pad.x, orange_pad.y)
                     self.orange_ferret = Ferret(self, orange_spawn[0], orange_spawn[1], orange, orange_pad)
                     self.ferrets.append(self.orange_ferret)
-                elif tile == 'p':
-                    self.player = Player(self, col, row)
 
     def run(self):
         self.playing = True
@@ -102,16 +104,16 @@ class Game:
                 if len(ferret.path) > 0:
                     ferret.move(self.player.x, self.player.y)
                 if self.tickcount % 2 == 0:
-                    ferret.afraid = False
                     if not (ferret.on_pad()):
                         ferret.react(self.player.x, self.player.y)
-                elif self.tickcount % 2 == 1:
-                    if ferret.afraid:
+                if ferret.afraid:
+                    ferret.thbbt = True
+                    if self.tickcount % 2 == 1:
                         ferret.get_small_neighbors()
                         if (self.player.x, self.player.y) in ferret.smallneighbors:
                             ferret.scare()
+                            ferret.path = []
                             self.current_time = self.tickcount
-                            ferret.thbbt = True
                 if self.tickcount - self.current_time >= 3:
                     ferret.thbbt = False
             self.update()
@@ -152,26 +154,29 @@ class Game:
             self.goal = (mousex, mousey)
             self.path = self.player.pathfind(self.graph, self.start, self.goal)
         for f in self.ferrets:
-            f.afraid = False
             if (mousex, mousey) == (f.x, f.y):
                 if pg.mouse.get_pressed()[0]:
                     f.afraid = True
                     lengths = {}
                     f.get_small_neighbors()
-                    for i in f.smallneighbors:
-                        self.path = self.player.pathfind(self.graph, self.start, (i[0], i[1]))
-                        lengths[len(self.path)] = self.path
-                    self.path = lengths[min(lengths)]
+                    if len(f.smallneighbors()) > 0:
+                        for i in f.smallneighbors:
+                            self.path = self.player.pathfind(self.graph, self.start, (i[0], i[1]))
+                            lengths[len(self.path)] = self.path
+                        self.path = lengths[min(lengths)]
                 else:
                     self.path = self.player.pathfind(self.graph, self.start, (f.x, f.y))
+            else:
+                f.afraid = False
         for w in self.walls:
             if (mousex, mousey) == (w.x, w.y):
                 lengths = {}
                 w.get_neighbors()
-                for i in w.neighbors:
-                    self.path = self.player.pathfind(self.graph, self.start, (i[0], i[1]))
-                    lengths[len(self.path)] = self.path
-                self.path = lengths[min(lengths)]
+                if len(w.neighbors) > 0:
+                    for i in w.neighbors:
+                        self.path = self.player.pathfind(self.graph, self.start, (i[0], i[1]))
+                        lengths[len(self.path)] = self.path
+                    self.path = lengths[min(lengths)]
         if len(self.path)%2 == 0:
             self.path = self.path[1::2]
         else:
@@ -188,17 +193,17 @@ class Game:
     def thbbt(self, ferret):
         pg.font.init()
         font = pg.font.SysFont('arial', 20)
-        text = font.render('Thbbbbbbbbbbt!', 1, (255, 240, 0))
+        text = font.render('Squeak!', 1, (255, 240, 0))
         if ferret.y == 0 and ferret.x == 0:
             self.screen.blit(text, ((ferret.x) * 32, (ferret.y) * 32))
         elif ferret.y == 0:
-            self.screen.blit(text, ((ferret.x-1) * 32, (ferret.y) * 32))
+            self.screen.blit(text, ((ferret.x) * 32, (ferret.y) * 32))
         elif ferret.x == 0:
             self.screen.blit(text, ((ferret.x) * 32, (ferret.y - 1) * 32))
         elif ferret.x == 13:
-            self.screen.blit(text, ((ferret.x-2) * 32, (ferret.y) * 32))
+            self.screen.blit(text, ((ferret.x-1) * 32, (ferret.y) * 32))
         else:
-            self.screen.blit(text, ((ferret.x-1) * 32, (ferret.y-1)*32))
+            self.screen.blit(text, ((ferret.x) * 32, (ferret.y-1)*32))
         pg.display.update()
 
     def events(self):
