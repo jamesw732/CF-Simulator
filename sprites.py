@@ -61,12 +61,14 @@ class Ferret(pg.sprite.Sprite):
                 self.smallneighbors.append(i)
 
     def scare(self):
-        choices = self.smallneighbors
-        for i in [(self.x+1, self.y-1),(self.x+1, self.y-1), (self.x-1, self.y+1), (self.x-1, self.y-1)]:
-            if i[0] >= 0 and i[0] <= 13 and 0 <= i[1] and i[1] <= 13:
-                choices.append(i)
-        (self.x, self.y) = random.choice(choices)
-        self.afraid = False
+        if (self.x, self.y) != (self.pad.x, self.pad.y):
+            self.get_small_neighbors()
+            choices = self.smallneighbors
+            for i in [(self.x+1, self.y-1),(self.x+1, self.y-1), (self.x-1, self.y+1), (self.x-1, self.y-1)]:
+                if i[0] >= 0 and i[0] <= 13 and 0 <= i[1] and i[1] <= 13 and i not in Wall.wallList:
+                    choices.append(i)
+            (self.x, self.y) = random.choice(choices)
+            self.afraid = False
 
     def neighborfind(self):
         self.neighbors = []
@@ -95,7 +97,7 @@ class Ferret(pg.sprite.Sprite):
             moves[0, 0] = (self.x+1, self.y)
 
         for i in range(-2, 0):
-            moves[(1, i)] = (self.x-1,self.y+1)
+            moves[(1, i)] = (self.x-1, self.y+1)
             moves[(2, i)] = (self.x - 1, self.y + 1)
             moves[(-1, i)] = (self.x+1, self.y+1)
             moves[(-2, i)] = (self.x + 1, self.y + 1)
@@ -104,29 +106,21 @@ class Ferret(pg.sprite.Sprite):
             moves[(2, j)] = (self.x - 1, self.y - 1)
             moves[(-1, j)]= (self.x+1, self.y-1)
             moves[(-2, j)] = (self.x + 1, self.y - 1)
-
         self.neighborfind()
-
         if (playerx, playery) in self.neighbors:
             self.path.extend(moves[dx, dy])
         self.update()
-
 
     def move(self, px, py):  # execute path every tick, but only react every other tick
         self.neighborfind()
         if len(self.path) > 1:
             if 0 <= self.path[0] <= 13 and 0 <= self.path[1] <= 13:
-                if (self.path[0], self.y) not in Wall.wallList and (self.x, self.path[1]) not in Wall.wallList and (self.path[0], self.path[1]) not in Wall.wallList:
+                if (self.path[0], self.y) not in Wall.wallList and (self.x, self.path[1]) not in Wall.wallList and (self.path[0], self.path[1]) not in Wall.wallList: # normal ferret movement
                     self.x = self.path[0]
                     self.y = self.path[1]
-                    self.path = []
-                elif (self.path[0], self.path[1]) in Wall.wallList:
-                    if self.path[0] not in Wall.wallList:
-                        self.x = self.path[0]
-                    elif self.path[1] not in Wall.wallList:
-                        self.y = self.path[1]
-                    self.path = []
-                else:
+                    self.path.pop(0)
+                    self.path.pop(0)
+                else: # diagonal destination where wall impedes one of the cardinal directions
                     if (self.path[0], self.y) in Wall.wallList:
                         self.y = self.path[1]
                         self.path.pop(1)
@@ -135,7 +129,23 @@ class Ferret(pg.sprite.Sprite):
                         self.x = self.path[0]
                         self.path.pop(0)
                         self.checky = True
-        else:
+            else:
+                if (self.path[0], self.path[1]) in Wall.wallList:  # only one is a wall
+                    if (self.path[0], self.y) not in Wall.wallList:
+                        self.x = self.path[0]
+                    elif (self.x, self.path[1]) not in Wall.wallList:
+                        self.y = self.path[1]
+                    self.path.pop(0)
+                    self.path.pop(0)
+                else:
+                    if 0 <= self.path[0] <= 13:
+                        self.x = self.path[0]
+                    elif 0 <= self.path[1] <= 13:
+                        self.y = self.path[1]
+                    self.path.pop(0)
+                    self.path.pop(0)
+
+        else: # second direction of last case
             if (px, py) not in self.neighbors:
                 if self.checky:
                     self.y = self.path[0]
@@ -167,16 +177,15 @@ class Ferret_pad(pg.sprite.Sprite):
         self.neighbors = []
 
     def spawnpoints(self):
-        x = self.x
-        y = self.y
-        for i in [-4, -3, -2, -1, 0, 1, 2, 3, 4]:
-            for j in [-4, -3, -2, -1, 0, 1, 2, 3, 4]:
-                if 0 < x+i < 12 and 0 < y+j < 12 and (x+i, y+j) not in Wall.wallList:
-                    self.neighbors.append((x+i, y+j))
-        for a in [-1, 0, 1]:
-            for b in [-1, 0, 1]:
-                if (x+a, y+b) in self.neighbors:
-                    self.neighbors.pop(self.neighbors.index((x+a, y+b)))
+        for i in range(-4, 5):
+            for j in range(-4, 5):
+                if 0 <= self.x+i <= 13 and 0 <= self.y+j <= 13 and (self.x+i, self.y+j) not in Wall.wallList:
+                    self.neighbors.append((self.x+i, self.y+j))
+
+        for a in range(-1, 2):
+            for b in range(-1, 2):
+                if (self.x+a, self.y+b) in self.neighbors:
+                    self.neighbors.pop(self.neighbors.index((self.x+a, self.y+b)))
         return self.neighbors
 
     def draw(self):
@@ -202,8 +211,8 @@ class Wall(pg.sprite.Sprite):
         self.neighbors = []
 
     def get_neighbors(self):
-        self.neighbors = [(self.x + 1, self.y), (self.x - 1, self.y), (self.x, self.y + 1), (self.x, self.y - 1)]
-        for i in self.neighbors:
-            if i in Wall.wallList:
-                self.neighbors.pop(self.neighbors.index(i))
+        self.neighbors = []
+        for i in [(self.x + 1, self.y), (self.x - 1, self.y), (self.x, self.y + 1), (self.x, self.y - 1)]:
+            if i not in Wall.wallList and i[0] >= 0 and i[0] <= 13 and 0 <= i[1] and i[1] <= 13:
+                self.neighbors.append(i)
         return self.neighbors
