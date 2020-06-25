@@ -122,13 +122,15 @@ class Ferret(pg.sprite.Sprite):
                     self.path.pop(0)
                 else: # diagonal destination where wall impedes one of the cardinal directions
                     if (self.path[0], self.y) in Wall.wallList:
-                        self.y = self.path[1]
-                        self.path.pop(1)
-                        self.checkx = True
+                        if (self.x, self.path[1]) not in Wall.wallList:
+                            self.y = self.path[1]
+                            self.path.pop(1)
+                            self.checkx = True
                     elif (self.x, self.path[1]) in Wall.wallList:
-                        self.x = self.path[0]
-                        self.path.pop(0)
-                        self.checky = True
+                        if (self.path[0], self.y) not in Wall.wallList:
+                            self.x = self.path[0]
+                            self.path.pop(0)
+                            self.checky = True
             else:
                 if (self.path[0], self.path[1]) in Wall.wallList:  # only one is a wall
                     if (self.path[0], self.y) not in Wall.wallList:
@@ -138,19 +140,19 @@ class Ferret(pg.sprite.Sprite):
                     self.path.pop(0)
                     self.path.pop(0)
                 else:
-                    if 0 <= self.path[0] <= 13:
+                    if 0 <= self.path[0] <= 13 and (self.path[0], self.y) not in Wall.wallList:
                         self.x = self.path[0]
-                    elif 0 <= self.path[1] <= 13:
+                    elif 0 <= self.path[1] <= 13 and (self.x, self.path[1]) not in Wall.wallList:
                         self.y = self.path[1]
                     self.path.pop(0)
                     self.path.pop(0)
 
         else: # second direction of last case
             if (px, py) not in self.neighbors:
-                if self.checky:
+                if self.checky and (self.x, self.path[0]) not in Wall.wallList:
                     self.y = self.path[0]
                     self.path = []
-                elif self.checkx:
+                elif self.checkx and (self.path[0], self.y) not in Wall.wallList:
                     self.x = self.path[0]
                     self.path = []
                 self.checkx = False
