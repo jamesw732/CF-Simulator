@@ -220,8 +220,8 @@ class Game:
                     self.quit()
             if event.type == pg.MOUSEBUTTONDOWN:
                 self.moveprep(pg.mouse.get_pos())
-
-g = Game()
-while True:
-    g.new()
-    g.run()
+if __name__ == "__main__":
+    g = Game()
+    while True:
+        g.new()
+        g.run()
